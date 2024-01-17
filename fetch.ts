@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const endpoint = "http://127.0.0.1:5000/translate";
+const endpoint =
+  Bun.env.TRANSLATE_ENDPOINT || "http://127.0.0.1:5000/translate";
 
 const options = {
   method: "POST",
