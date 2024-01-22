@@ -12,10 +12,32 @@ $ cd jsontl
 $ bun install
 ```
 
-To translate the values in `input.json` from English to German execute the script with the following parameters:
+Alternatively, the script can be installed globally without cloning the repository:
+
+```console
+$ bun i git+https://github.com/The-Bubble-Company/jsontl.git --global
+```
+
+To translate the values in `input.json` from English to German execute the script with the following parameters inside the cloned repository:
 
 ```console
 $ ./jsontl --from en --to de --input input.json
 ```
 
+or if installed globally:
+
+```console
+$ jsontl --from en --to de --input input.json
+```
+
 An `output.json` file will be generated in the current directory with the same properties and the translated values.
+
+If desired, an output file can be specified with `--output`; only new properties will be added if the specified file exists (existent properties won't be touched):
+
+```console
+$ jsontl --from en --to de --input english.json --output german.json
+Translating... DONE
+Input file: english.json
+Output: german.json
+Translated 10 props from en to de!
+```
