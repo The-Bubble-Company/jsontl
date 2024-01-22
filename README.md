@@ -15,7 +15,7 @@ $ bun install
 To translate the values in `input.json` from English to German execute the script with the following parameters:
 
 ```console
-$ ./index.ts --from en --to de --file input.json
+$ ./index.ts --from en --to de --input input.json
 ```
 
 An `output.json` file will be generated in the current directory with the same properties and the translated values.
