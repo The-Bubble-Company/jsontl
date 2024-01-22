@@ -1,5 +1,3 @@
-#!/usr/bin/env bun
-
 import { getArgs } from "./args";
 import { translate } from "./fetch";
 
