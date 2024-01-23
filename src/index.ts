@@ -1,53 +1,67 @@
 import { getArgs } from "./args";
 import { translate } from "./fetch";
 
+type Json = {
+  [key: string]: string | Json;
+};
+
+let translatedCounter = 0;
+
+const translateProps = async (
+  args: ReturnType<typeof getArgs>,
+  input: Json,
+  output?: Json,
+): Promise<Json> =>
+  Object.entries(input).reduce(
+    async (accumulatorPromise, [key, value]) => {
+      const accumulator = await accumulatorPromise;
+
+      if (typeof value === "object") {
+        const nestedOutput = output?.[key];
+
+        value = await translateProps(
+          args,
+          value,
+          typeof nestedOutput === "object" ? nestedOutput : undefined,
+        );
+      } else if (output && key in output) {
+        value = output[key];
+      } else if (typeof value === "string") {
+        // empty strings return undefined
+        value = value && (await translate({ ...args, text: value }));
+        translatedCounter++;
+      }
+
+      return { ...accumulator, [key]: value };
+    },
+    Promise.resolve(output ?? {}),
+  );
+
 const args = getArgs();
 const input = Bun.file(args.input);
 const output = args.output || "output.json";
 
 const inputContent = await input.json();
 
-const inputKeys = Object.keys(inputContent);
+const outputFile = Bun.file(output);
 
-let values: string[];
-let outputKeys: string[];
-let outputContent: Record<string, string> | undefined;
-
-if (args.output && (await Bun.file(args.output).exists())) {
-  outputContent = (await Bun.file(args.output).json()) as Record<
-    string,
-    string
-  >;
-
-  const keys = Object.keys(outputContent);
-
-  outputKeys = inputKeys.filter((key) => !keys.includes(key));
-
-  values = outputKeys.map((key) => inputContent[key]);
-} else {
-  outputKeys = inputKeys;
-  values = Object.values<string>(inputContent);
-}
+const outputContent =
+  args.output && (await outputFile.exists())
+    ? await outputFile.json()
+    : undefined;
 
 process.stdout.write("Translating...");
 
-const translatedValues = await translate({
-  ...args,
-  text: values,
-});
+const translatedContent = await translateProps(
+  args,
+  inputContent,
+  outputContent,
+);
 
 console.log(" DONE");
-
-const translatedContent = outputKeys.reduce(
-  (accumulator, key, index) => ({
-    ...accumulator,
-    [key]: translatedValues[index],
-  }),
-  outputContent || {},
-);
 
 Bun.write(output, JSON.stringify(translatedContent, null, 2));
 
 console.log(
-  `Input file: ${args.input}\nOutput: ${output}\nTranslated ${translatedValues.length} props from ${args.from} to ${args.to}!`,
+  `Input file: ${args.input}\nOutput: ${output}\nTranslated ${translatedCounter} props from ${args.from} to ${args.to}!`,
 );
